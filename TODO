@@ -1,0 +1,5 @@
+Add test-suite for hammering from different threads.
+
+Add test-suite for lock()ing tests.
+
+Add test-suite for file handle tieing.

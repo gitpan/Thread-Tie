@@ -1,0 +1,13 @@
+MANIFEST
+CHANGELOG
+README
+TODO
+VERSION
+Makefile.PL
+lib/Thread/Tie.pm
+lib/Thread/Tie/Thread.pm
+lib/Thread/Tie/Scalar.pm
+lib/Thread/Tie/Array.pm
+lib/Thread/Tie/Hash.pm
+lib/Thread/Tie/Handle.pm
+t/Tie.t
