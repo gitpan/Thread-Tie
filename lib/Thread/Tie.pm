@@ -1,19 +1,24 @@
 package Thread::Tie;
 
+# Default thread to be used
+# When we're compiling
+#  Make sure we can start the thread
+#  And start the default thread
+
+my $THREAD;
+BEGIN {
+    require Thread::Tie::Thread;
+    $THREAD = Thread::Tie::Thread->new;
+}
+
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.01';
+our $VERSION : unique = '0.02';
 use strict;
 
-# Use the thread creation logic
-
-use Thread::Tie::Thread ();
-
-# Default thread to be used
 # Clone detection logic
 
-my $THREAD;
 my $CLONE = 0;
 
 # Satisfy -require-
@@ -188,7 +193,7 @@ Thread::Tie - tie variables into a thread of their own
 
 =head1 SYNOPSIS
 
-    use Thread::Tie;
+    use Thread::Tie; # use as early as possible for maximum memory savings
 
     # use default thread + tieing + create thread when needed
     tie $scalar, 'Thread::Tie';
@@ -244,10 +249,8 @@ I see the following advantages to this approach:
 
 =item memory usage
 
-Shared variables in this approach are truly shared.  The value of a variable
-only exists once in memory.  This implementation also circumvents the memory
-leak that currently (threads::shared version 0.90) plagues any shared array
-or shared hash access.
+This implementation circumvents the memory leak that currently
+(threads::shared version 0.90) plagues any shared array or shared hash access.
 
 =item tieing shared variables
 

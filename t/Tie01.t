@@ -1,3 +1,5 @@
+use Thread::Tie; # use as first to get maximum effect
+
 BEGIN {				# Magic Perl CORE pragma
     if ($ENV{PERL_CORE}) {
         chdir 't' if -d 't';
@@ -5,7 +7,7 @@ BEGIN {				# Magic Perl CORE pragma
     }
 }
 
-use Test::More tests => 52;
+use Test::More tests => 65;
 
 use_ok( 'Thread::Tie::Thread' );
 can_ok( 'Thread::Tie::Thread',qw(
@@ -135,3 +137,37 @@ is( join('',sort keys %hash),'ac',	'check hash keys' );
 %hash = ();
 cmp_ok( scalar(keys %hash),'==',0,	'check number of elements' );
 is( join('',keys %hash),'',		'check hash fetch' );
+
+#== HANDLE =========================================================
+
+my $file = 'testfile';
+ok( open( my $handle,'>',$file ),	'check opening of file' );
+
+my $text = <<EOD;
+This is some text
+over multiple lines
+that will be read
+by a shared handle.
+EOD
+ok( (print $handle $text),		'check printing to file' );
+ok( close( $handle ),			'close the file' );
+
+tie *HANDLE,'Thread::Tie',{},'<',$file;
+isa_ok( $tied,'Thread::Tie',		'check tied object type' );
+
+my $read;
+$read .= $_ while <HANDLE>;
+is( $read,$text,			'check contents of file' );
+ok( close( HANDLE ),			'close the file' );
+
+ok( open( HANDLE,">$file" ),		'check opening of file' );
+ok( (print HANDLE $text),		'check printing to the file' );
+ok( (printf HANDLE '%s',$text),		'check printing to the file' );
+ok( close( HANDLE ),			'close the file' );
+
+ok( open( $handle,$file ),		'check opening of file' );
+$read = '';
+$read.= $_ while <$handle>;
+is( $read,$text.$text,			'check contents of file' );
+
+ok( unlink( $file ),			"unlink $file" );

@@ -1,2 +1,27 @@
+0.02	10 August 2002
+	Added support for "use" field for using extra modules inside the
+	thread when tie()ing the variable.
+
+	Added documentation for the TIEHANDLE implementation.
+
+	Fixed up the default TIEHANDLE implementation.  Should now work
+	except for readline() in list context: because the context is not
+	(yet) passed to the thread correctly, reading lines from a file
+	in list context doesn't work.
+
+	Added BEGIN section to Thread::Tie, causing the default thread
+	to be started during compilation.  This can make the thread as
+	lightweight as possible, especially if it is the first module used.
+
+	Added some intelligence to Thread::Tie::Thread's _freeze and _thaw
+	so that they will not use Storable unless it is really needed.  This
+	should be a performance boost for the simple cases.
+
+	Removed mention of being truly shared because Arthur Bergman pointed
+	out that the current tie() implementation _always_ saves the values
+	in the (thread local) SV.  Although this has nothing to do with
+	shared variables, it _does_ cause the values to actually be copied
+	into thread local space everytime they are fetched.
+
 0.01	9 August 2002
 	First version of Thread::Tie.

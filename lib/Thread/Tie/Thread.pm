@@ -3,7 +3,7 @@ package Thread::Tie::Thread;
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.01';
+our $VERSION : unique = '0.02';
 use strict;
 
 # Make sure we can do threads
@@ -13,6 +13,14 @@ use strict;
 use threads ();
 use threads::shared ();
 use Storable ();
+
+# Make sure the freeze and thaw routines are in memory
+# Create frozen version of empty list
+# Save the iced signature
+
+Storable::thaw( Storable::freeze( [] ) );
+my $iced = Storable::freeze( [] );
+$iced = unpack( 'l',$iced );
 
 # Clone detection logic
 
@@ -235,7 +243,24 @@ sub _handler {
 #  IN: 1 reference to data structure to freeze
 # OUT: 1 frozen scalar
 
-sub _freeze { Storable::freeze( $_[0] ) } #_freeze
+sub _freeze {
+
+# If we have at least one element in the list
+#  For all of the elements
+#   Return truly frozen version if something special
+#  Return the values contatenated with null bytes
+# Else (empty list)
+#  Return undef value
+
+    if (@{$_[0]}) {
+        foreach (@{$_[0]}) {
+            return Storable::freeze( $_[0] ) if !defined() or ref() or m#\0#;
+        }
+        return join( "\0",@{$_[0]} );
+    } else {
+        return;
+    }
+} #_freeze
 
 #---------------------------------------------------------------------------
 #  IN: 1 frozen scalar to defrost
@@ -244,12 +269,27 @@ sub _freeze { Storable::freeze( $_[0] ) } #_freeze
 sub _thaw {
 
 # Return now if nothing to return or not interested in result
-# Return whole array if in list context
-# Return just the first element
 
     return unless defined( $_[0] ) and defined( wantarray );
-    return @{Storable::thaw( $_[0] )} if wantarray;
-    Storable::thaw( $_[0] )->[0];
+
+# If we're interested in a list
+#  Return thawed list from frozen info if frozen
+#  Return list split from a normal string
+# Elseif we have frozen stuff (and we want a scalar)
+#  Thaw the list and return the first element
+# Else (not frozen and we want a scalar)
+#  Look for the first nullbyte and return string until then if found
+#  Return the string
+
+    if (wantarray) {
+        return @{Storable::thaw( $_[0] )} if unpack( 'l',$_[0] ) == $iced;
+        split( "\0",$_[0] )
+    } elsif (unpack( 'l',$_[0] ) == $iced) {
+        Storable::thaw( $_[0] )->[0];
+    } else {
+	return $1 if $_[0] =~ m#^([^\0]*)#;
+        $_[0];
+    }
 } #_thaw
 
 #---------------------------------------------------------------------------

@@ -2,7 +2,7 @@ package Thread::Tie::Handle;
 
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.01';
+our $VERSION : unique = '0.02';
 use strict;
 
 # Satisfy -require-
@@ -25,7 +25,7 @@ sub TIEHANDLE {
 # Bless it so we can use it to call ourselves
 
     my $class = shift;
-    my $handle = \do { local *HANDLE }; # basically rw \undef
+    my $handle = \do { local *TIEHANDLE }; # basically rw \undef
     bless $handle,$class;
 
 # Open it if there are any parameters
@@ -82,7 +82,7 @@ sub OPEN {
 # Perform a 2 or 3 argument open and return the result
 
     $_[0]->CLOSE if defined($_[0]->FILENO);
-    @_ == 2 ? open( $_[0], $_[1] ) : open( @_ );
+    @_ == 2 ? open( $_[0], $_[1] ) : open( $_[0],$_[1],$_[2] );
 } #OPEN
 
 #---------------------------------------------------------------------------
@@ -97,7 +97,7 @@ sub READ { read( $_[0],$_[1],$_[2] ) } #READ
 #  IN: 1 instantiated object
 # OUT: 1 line read
 
-sub READLINE { readline( $_[0] ) } #READLINE
+sub READLINE { scalar(readline( $_[0] )) } #READLINE
 
 #---------------------------------------------------------------------------
 #  IN: 1 instantiated object
@@ -117,7 +117,7 @@ sub PRINT {
 # Write the stuff that we need and return the result
 
     my $self = shift;
-    my $buffer = join( $, || '',@_,'' ); # || to calm if undef in -w
+    my $buffer = join( $, || '',@_,'' ); # || to calm if $, is undef in -w
     $self->WRITE( $buffer,length($buffer),0 );
 } #PRINT
 
@@ -134,7 +134,7 @@ sub PRINTF {
 # Write the stuff that we need and return the result
 
     my $self = shift;
-    my $buffer = sprintf( @_ );
+    my $buffer = sprintf( shift,@_ ); # can't use @_ because of tokenization
     $self->WRITE( $buffer,length($buffer),0 );
 } #PRINTF
 
@@ -145,7 +145,7 @@ sub PRINTF {
 #      4 offset into variable
 # OUT: 1 number of bytes/characters written
 
-sub WRITE { syswrite( shift,@_ ) } #WRITE
+sub WRITE { syswrite( $_[0],$_[1],$_[2],$_[3] ) } #WRITE
 
 #---------------------------------------------------------------------------
 
