@@ -9,13 +9,19 @@ BEGIN {				# Magic Perl CORE pragma
     }
 }
 
-warn <<EOD if -t STDERR;
+BEGIN {
+    warn <<EOD if -t STDERR;
+
+
 There seems to be a problem with deleting elements from a hash created with
 Thread::Tie.  This causes an error message to be displayed for each delete()
 (without further affecting the success of the test or leaking memory).  It
 can therefore be wise to run this test with the standard error redirected,
-e.g. "make test 2>/dev/null".
+e.g. "make test 2>/dev/null", as the test-suite will attempt to do 10001
+delete()'s.
+
 EOD
+} #BEGIN
 
 use Test::More tests => 71;
 

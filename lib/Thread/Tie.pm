@@ -16,7 +16,7 @@ END { Thread::Tie->shutdown }
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-$VERSION = '0.09';
+$VERSION = '0.10';
 use strict;
 
 # Clone detection logic
@@ -144,10 +144,12 @@ sub _handle {
 # Obtain the object
 # Obtain the subroutine
 # Obtain the thread object being used
+# Return now if there is no thread
 
     my $self = shift;
     my $sub = shift;
     my $thread = $self->{'thread'};
+    return unless $thread; # needed for pbs during global destruction
 
 # If there is no thread anymore
 #  Return now if we're destroying or untieing

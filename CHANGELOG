@@ -1,3 +1,10 @@
+0.10	13 August 2003
+	Fixed strange error that would sometimes cause an execution error
+	during global destruction.  I guess it's just another case of
+	fake objects being presented for destruction ;-(
+
+	Tweaked the message in the test-suite a little.
+
 0.09	11 August 2003
 	Fixed some typos in the Makefile.PL.  Adapted some areas in the
 	test-suite to allow for better testing.  Made sure that the tests
