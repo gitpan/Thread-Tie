@@ -16,7 +16,7 @@ END { Thread::Tie->shutdown }
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-$VERSION = '0.10';
+$VERSION = '0.12';
 use strict;
 
 # Clone detection logic
@@ -566,6 +566,11 @@ specified with the "module" field when the variable was tied.
 The "thread" object method returns the instantiated 'Thread::Tie::Thread'
 object to which the variable is tied.  It is the same as what was
 (implicetely) specified with the "thread" field when the variable was tied.
+
+=head1 REQUIRED MODULES
+
+ load (0.11)
+ Thread::Serialize (0.07)
 
 =head1 CAVEATS
 

@@ -1,3 +1,17 @@
+0.12	28 December 2003
+	Added automatic required modules update using Devel::Required.
+
+0.11	27 September 2003
+	Added dependency on load.pm, version 0.11, as that has some more fixes,
+	particularly relating to running under taint.
+
+	18 September 2003
+	Increased dependency on Thread::Serialize 0.07, which in turn
+	should get at least load 0.09, which contains several fixes.
+
+	Removed warning from test-suite as the strange warnings seems to
+	have disappeared with the new version of load.
+
 0.10	13 August 2003
 	Fixed strange error that would sometimes cause an execution error
 	during global destruction.  I guess it's just another case of

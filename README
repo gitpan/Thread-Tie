@@ -12,9 +12,13 @@ any version of Perl before 5.8.0 or without threads enabled.
 
                          *************************
 
-Copyright (c) 2002 Elizabeth Mattijsen <liz@dijkmat.nl>. All rights
+Copyright (c) 2002-2003 Elizabeth Mattijsen <liz@dijkmat.nl>. All rights
 reserved.  This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
+
+Required Modules:
+ load (0.11)
+ Thread::Serialize (0.07)
 
 The build is standard:
 
