@@ -1,3 +1,8 @@
+0.09	11 August 2003
+	Fixed some typos in the Makefile.PL.  Adapted some areas in the
+	test-suite to allow for better testing.  Made sure that the tests
+	run with strict and warnings.
+
 0.08	30 September 2002
 	Use "load" instead of "AutoLoader" in all but Thread::Tie itself.
 	Increased dependency of Thread::Serialize to 0.05.

@@ -12,3 +12,4 @@ lib/Thread/Tie/Scalar.pm
 lib/Thread/Tie/Thread.pm
 t/Tie01.t
 t/Tie02.t
+META.yml                                Module meta-data (added by MakeMaker)

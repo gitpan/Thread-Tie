@@ -1,4 +1,6 @@
 use Thread::Tie; # use as first to get maximum effect
+use strict;
+use warnings;
 
 BEGIN {				# Magic Perl CORE pragma
     if ($ENV{PERL_CORE}) {
@@ -6,6 +8,14 @@ BEGIN {				# Magic Perl CORE pragma
         @INC = '../lib';
     }
 }
+
+warn <<EOD if -t STDERR;
+There seems to be a problem with deleting elements from a hash created with
+Thread::Tie.  This causes an error message to be displayed for each delete()
+(without further affecting the success of the test or leaking memory).  It
+can therefore be wise to run this test with the standard error redirected,
+e.g. "make test 2>/dev/null".
+EOD
 
 use Test::More tests => 71;
 
@@ -50,37 +60,39 @@ is( $scalar,'from thread',		'check scalar fetch' );
 
 $tied = tie my @array, 'Thread::Tie',{},qw(a b c);
 isa_ok( $tied,'Thread::Tie',		'check tied object type' );
-is( join('',@array),'abc',		'check array fetch' );
+is( "@array",'a b c',			'check array fetch' );
 
 push( @array,qw(d e f) );
-is( join('',@array),'abcdef',		'check array fetch' );
+is( "@array",'a b c d e f',		'check array fetch' );
 
 threads->new( sub {push( @array,qw(g h i) )} )->join;
-is( join('',@array),'abcdefghi',	'check array fetch' );
+is( "@array",'a b c d e f g h i',	'check array fetch' );
 
 shift( @array );
-is( join('',@array),'bcdefghi',		'check array fetch' );
+is( "@array",'b c d e f g h i',		'check array fetch' );
 
 unshift( @array,'a' );
-is( join('',@array),'abcdefghi',	'check array fetch' );
+is( "@array",'a b c d e f g h i',	'check array fetch' );
 
 pop( @array );
-is( join('',@array),'abcdefgh',		'check array fetch' );
+is( "@array",'a b c d e f g h',		'check array fetch' );
 
 push( @array,'i' );
-is( join('',@array),'abcdefghi',	'check array fetch' );
+is( "@array",'a b c d e f g h i',	'check array fetch' );
 
 splice( @array,3,3 );
-is( join('',@array),'abcghi',		'check array fetch' );
+is( "@array",'a b c g h i',		'check array fetch' );
 
 splice( @array,3,0,qw(d e f) );
-is( join('',@array),'abcdefghi',	'check array fetch' );
+is( "@array",'a b c d e f g h i',	'check array fetch' );
 
 splice( @array,0,3,qw(d e f) );
-is( join('',@array),'defdefghi',	'check array fetch' );
+is( "@array",'d e f d e f g h i',	'check array fetch' );
 
 delete( $array[0] );
-is( join('',@array),'efdefghi',		'check array fetch' );
+{no warnings 'uninitialized';
+ is( "@array",' e f d e f g h i',	'check array fetch' );
+}
 
 @array = qw(a b c d e f g h i);
 is( join('',@array),'abcdefghi',	'check array fetch' );
@@ -91,7 +103,9 @@ ok( !exists( $array[9] ),		'check whether array element exists' );
 
 $#array = 10;
 cmp_ok( scalar(@array),'==',11,		'check number of elements' );
-is( join('',@array),'abcdefghi',	'check array fetch' );
+{no warnings 'uninitialized';
+ is( "@array",'a b c d e f g h i  ',	'check array fetch' );
+}
 
 ok( !exists( $array[10] ),		'check whether array element exists' );
 $array[10] = undef;
@@ -131,7 +145,7 @@ my @list;
 while (my ($key,$value) = each %hash) { push( @list,$key,$value ) }
 is( join('',sort @list),'ABCabc',	'check all eaches' );
 
-delete( $hash{'b'} );
+delete( $hash{'b'} ); # attempt to free unreferenced scalar ?
 is( join('',sort keys %hash),'ac',	'check hash keys' );
 
 %hash = ();

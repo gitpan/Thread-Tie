@@ -1,4 +1,6 @@
 use Thread::Tie; # use as first to get maximum effect
+use strict;
+use warnings;
 
 BEGIN {				# Magic Perl CORE pragma
     if ($ENV{PERL_CORE}) {
@@ -22,6 +24,7 @@ isa_ok( $tied,'Thread::Tie',		'check object type' );
 
 my $count = $tied->semaphore;
 isa_ok( $count,'SCALAR',		'check object type' );
+$$count = 0; # to prevent warnings
 
 my @thread;
 push( @thread,threads->new( sub {
@@ -35,11 +38,11 @@ push( @thread,threads->new( sub {
 $_->join foreach @thread;
 
 my $check;
-$check .= $_ foreach 1..$times;
-is( join('',@array),$check,		'check array contents' );
+$check = join( ' ',1..$times );
+is( "@array",$check,			'check array contents' );
 
 pop( @array ) foreach 1..$times;
-is( join('',@array),'',			'check array contents' );
+is( "@array",'',			'check array contents' );
 
 untie( @array );
 }
@@ -52,6 +55,7 @@ isa_ok( $tied,'Thread::Tie',		'check object type' );
 
 my $count = $tied->semaphore;
 isa_ok( $count,'SCALAR',		'check object type' );
+$$count = 0; # to prevent warnings
 
 my @thread;
 push( @thread,threads->new( sub {
@@ -71,7 +75,7 @@ my $hash;
 $hash .= ($_.$hash{$_}) foreach (sort {$a <=> $b} keys %hash);
 is( $hash,$check,			'check hash contents' );
 
-delete( $hash{$_} ) foreach 1..$times;
+delete( $hash{$_} ) foreach 1..$times; # attempt to free unreferenced scalar
 is( join('',%hash),'',			'check hash contents' );
 
 untie( %hash );
@@ -85,6 +89,7 @@ isa_ok( $tied,'Thread::Tie',		'check object type' );
 
 my $count = $tied->semaphore;
 isa_ok( $count,'SCALAR',		'check object type' );
+$$count = 0; # to prevent warnings
 
 ok( open( HANDLE,">$testfile" ),	'check opening of file' );
 
@@ -129,6 +134,7 @@ isa_ok( $tied,'Thread::Tie',		'check object type' );
 
 my $count = $tied->semaphore;
 isa_ok( $count,'SCALAR',		'check object type' );
+$$count = 0; # to prevent warnings
 
 ok( open( HANDLE,'<',$testfile ),	'check opening of file' );
 
