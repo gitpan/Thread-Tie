@@ -1,3 +1,11 @@
+0.04	15 August 2002
+	Added CAVEATS section about limitations of what can be transported
+	between threads.
+
+	Removed custom freeze and thaw operations from Thread::Tie::Thread.
+	Replaced by Thread::Serialize's versions.  Added depenendency on
+	Thread::Serialize.
+
 0.03	13 August 2002
 	Fixed problem with DESTROYing of tied variables after the thread
 	was shut down.  Added error message when trying to do things other

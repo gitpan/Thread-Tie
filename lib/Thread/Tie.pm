@@ -14,7 +14,7 @@ BEGIN {
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.03';
+our $VERSION : unique = '0.04';
 use strict;
 
 # Clone detection logic
@@ -563,6 +563,14 @@ The "thread" object method returns the instantiated 'Thread::Tie::Thread'
 object to which the variable is tied.  It is the same as what was
 (implicetely) specified with the "thread" field when the variable was tied.
 
+=head1 CAVEATS
+
+Because transport of data structures between threads is severely limited in
+the current threads implementation (perl 5.8.0), data structures need to be
+serialized.  This is achieved by using the L<Thread::Serialize> library.
+Please check that module for information about the limitations (of any) of
+data structure transport between threads.
+
 =head1 TODO
 
 Examples should be added.
@@ -581,6 +589,6 @@ modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<threads>.
+L<threads>, L<Thread::Serialize>.
 
 =cut

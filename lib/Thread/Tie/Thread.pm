@@ -3,22 +3,16 @@ package Thread::Tie::Thread;
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.03';
+our $VERSION : unique = '0.04';
 use strict;
 
 # Make sure we can do threads
 # Make sure we can do shared threads
-# Make sure we can freeze and thaw
+# Make sure we can serialize with freeze() and thaw()
 
 use threads ();
 use threads::shared ();
-use Storable ();
-
-# Make sure the freeze and thaw routines are in memory
-# Create the iced signature
-
-Storable::thaw( Storable::freeze( [] ) );
-my $iced = unpack( 'l',Storable::freeze( [] ) );
+use Thread::Serialize;
 
 # Thread local list of tied objects
 # Clone detection logic
@@ -127,7 +121,7 @@ sub _handle {
     my $self = shift;
     my $sub = shift;
     my ($control,$data) = @$self{qw(control data)};
-    my $frozen = _freeze( \@_ );
+    my $frozen = freeze( @_ );
 
 # Initialize the tries counter
 # While we haven't got access to the handler
@@ -158,7 +152,7 @@ sub _handle {
         threads->yield while defined( $$control );
         $frozen = $$data;
         undef( $$data );
-        return _thaw( $frozen );
+        return thaw( $frozen );
     }
 } #_handle
 
@@ -191,7 +185,7 @@ sub _handler {
 
     my $object;
     my $code;
-    my $undef = _freeze( [undef] );
+    my $undef = freeze( undef );
 
 # Initialize the tie() dispatch hash
 
@@ -220,7 +214,7 @@ sub _handler {
 #  Obtain the ordinal number of the object to execute + data to be sent
 
         $sub = $$control;
-        ($ordinal,@_) = _thaw( $$data );
+        ($ordinal,@_) = thaw( $$data );
 
 #  If we have an object, obtaining local copy of object on the fly
 #   If we have a code reference for this method, saving it on the fly
@@ -235,7 +229,7 @@ sub _handler {
                 (my $localsub = $sub) =~ s#^.*::##;
                 $code = $dispatch{$sub} = $object->can( $localsub );
             }
-            $$data = $code ? _freeze( [$code->( $object,@_ )] ) : $undef;
+            $$data = $code ? freeze( $code->( $object,@_ ) ) : $undef;
 
 #  Elseif we have a tie action
 #   If it is a known tie method
@@ -272,59 +266,6 @@ sub _handler {
         threads->yield while defined( $$data );
     }
 } #_handler
-
-#---------------------------------------------------------------------------
-#  IN: 1 reference to data structure to freeze
-# OUT: 1 frozen scalar
-
-sub _freeze {
-
-# If we have at least one element in the list
-#  For all of the elements
-#   Return truly frozen version if something special
-#  Return the values contatenated with null bytes
-# Else (empty list)
-#  Return undef value
-
-    if (@{$_[0]}) {
-        foreach (@{$_[0]}) {
-            return Storable::freeze( $_[0] ) if !defined() or ref() or m#\0#;
-        }
-        return join( "\0",@{$_[0]} );
-    } else {
-        return;
-    }
-} #_freeze
-
-#---------------------------------------------------------------------------
-#  IN: 1 frozen scalar to defrost
-# OUT: 1..N thawed data structure
-
-sub _thaw {
-
-# Return now if nothing to return or not interested in result
-
-    return unless defined( $_[0] ) and defined( wantarray );
-
-# If we're interested in a list
-#  Return thawed list from frozen info if frozen
-#  Return list split from a normal string
-# Elseif we have frozen stuff (and we want a scalar)
-#  Thaw the list and return the first element
-# Else (not frozen and we want a scalar)
-#  Look for the first nullbyte and return string until then if found
-#  Return the string
-
-    if (wantarray) {
-        return @{Storable::thaw( $_[0] )} if unpack( 'l',$_[0] ) == $iced;
-        split( "\0",$_[0] )
-    } elsif (unpack( 'l',$_[0] ) == $iced) {
-        Storable::thaw( $_[0] )->[0];
-    } else {
-	return $1 if $_[0] =~ m#^([^\0]*)#;
-        $_[0];
-    }
-} #_thaw
 
 #---------------------------------------------------------------------------
 
