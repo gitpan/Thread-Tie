@@ -1,3 +1,13 @@
+0.06	31 August 2002
+	Added OPTIMIZATIONS section to pod of T::T::Thread.
+
+        Changed T::T::Thread to use AutoLoader to defer loading of necessary
+	subroutines to when they are actually needed.  This should save
+	memory and CPU for larger programs, or with large numbers of threads.
+	The test-suite takes 1% less memory and uses 5% less CPUL: the
+	overhead of compiling is levelled out with the overhead of cloning
+	pre-compiled routines.
+
 0.05	20 August 2002
 	Dave Mitchell showed me the error of my ways with regards to client
 	server thread programming.  Fixed the main handler so that no yield()s

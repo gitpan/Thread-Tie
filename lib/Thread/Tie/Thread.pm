@@ -3,22 +3,26 @@ package Thread::Tie::Thread;
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.05';
+our $VERSION = '0.06';
 use strict;
+
+# Make sure we only load stuff when we actually need it
+
+use AutoLoader 'AUTOLOAD';
 
 # Make sure we can do threads
 # Make sure we can do shared threads
 # Make sure we can serialize with freeze() and thaw()
 
 use threads ();
-use threads::shared qw(cond_signal cond_wait);
+use threads::shared ();
 use Thread::Serialize;
 
 # Thread local list of tied objects
 # Clone detection logic
 
-my @OBJECT;
-my $CLONE = 0;
+our @OBJECT;
+our $CLONE = 0;
 
 # Satisfy -require-
 
@@ -62,6 +66,36 @@ sub new {
     threads->yield while defined($server);
     $self;
 } #new
+
+#---------------------------------------------------------------------------
+
+# standard Perl features
+
+#---------------------------------------------------------------------------
+
+# Increment the current clone value (mark this as a cloned version)
+
+sub CLONE { $CLONE++ } #CLONE
+
+#---------------------------------------------------------------------------
+#  IN: 1 instantiated object
+
+sub DESTROY {
+
+# Obtain the object
+# Return if we're not in the originating thread
+# Shut the thread down
+
+    my $self = shift;
+    return if $self->{'CLONE'} != $CLONE;
+    $self->shutdown;
+} #DESTROY
+
+#---------------------------------------------------------------------------
+
+# AutoLoader takes over from here
+
+__END__
 
 #---------------------------------------------------------------------------
 
@@ -135,13 +169,13 @@ sub _handle {
 
      $$client = $frozen;
      $$server = $sub;
-     cond_signal( $server );
+     threads::shared::cond_signal( $server );
 
 # Wait for the server to finish
 # Obtain local copy of result
 # Return result of the action
 
-     cond_wait( $server );
+     threads::shared::cond_wait( $server );
      $frozen = $$client;
     } #$client,$server
     thaw( $frozen );
@@ -199,7 +233,7 @@ sub _handler {
 #  Obtain the ordinal number of the object to execute + data to be sent
 
     while (1) {
-        cond_wait( $server );
+        threads::shared::cond_wait( $server );
         last unless $sub = $$server;
         ($ordinal,@_) = thaw( $$client );
 
@@ -249,34 +283,10 @@ sub _handler {
 #  Mark the data to be ready for usage
 # Signal the one doing the shutdown that we're done
 
-        cond_signal( $server );
+        threads::shared::cond_signal( $server );
     }
-    cond_signal( $server );
+    threads::shared::cond_signal( $server );
 } #_handler
-
-#---------------------------------------------------------------------------
-
-# standard Perl features
-
-#---------------------------------------------------------------------------
-
-# Increment the current clone value (mark this as a cloned version)
-
-sub CLONE { $CLONE++ } #CLONE
-
-#---------------------------------------------------------------------------
-#  IN: 1 instantiated object
-
-sub DESTROY {
-
-# Obtain the object
-# Return if we're not in the originating thread
-# Shut the thread down
-
-    my $self = shift;
-    return if $self->{'CLONE'} != $CLONE;
-    $self->shutdown;
-} #DESTROY
 
 #---------------------------------------------------------------------------
 #  IN: 1 object (ignored)
@@ -325,8 +335,6 @@ sub doUSE {
 } #doUSE
 
 #---------------------------------------------------------------------------
-
-__END__
 
 =head1 NAME
 
@@ -391,6 +399,15 @@ thread that is being used.
 The "thread" object method returns the actual L<threads> thread object that
 is being used.
 
+=head1 OPTIMIZATIONS
+
+This module uses L<AutoLoader> to reduce memory and CPU usage. This causes
+subroutines only to be compiled in a thread when they are actually needed at
+the expense of more CPU when they need to be compiled.  Simple benchmarks
+however revealed that the overhead of the compiling single routines is not
+much more (and sometimes a lot less) than the overhead of cloning a Perl
+interpreter with a lot of subroutines pre-loaded.
+
 =head1 AUTHOR
 
 Elizabeth Mattijsen, <liz@dijkmat.nl>.
@@ -405,6 +422,6 @@ modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Thread::Tie>, L<threads>.
+L<Thread::Tie>, L<threads>, L<AutoLoader>.
 
 =cut
