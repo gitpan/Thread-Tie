@@ -16,12 +16,12 @@ END { Thread::Tie->shutdown }
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.07';
+$VERSION = '0.08';
 use strict;
 
 # Clone detection logic
 
-my $CLONE = 0;
+our $CLONE = 0;
 
 # Satisfy -require-
 

@@ -1,3 +1,15 @@
+0.08	30 September 2002
+	Use "load" instead of "AutoLoader" in all but Thread::Tie itself.
+	Increased dependency of Thread::Serialize to 0.05.
+
+	27 September 2002
+	Removed "our" from $VERSION and @ISA, should shave off some bytes in
+	memory usage, as found from testing with Benchmark::Thread::Size.
+
+	5 September 2002
+	Adapted MANIFEST: the 2nd test-file of the test-suite was missing ;-(
+	so nobody but me did the stress test.
+
 0.07	1 September 2002
 	Removed shutdown test from Tie02.t: default thread should close down
 	on its own now, you shouldn't get a "Threads were running" error

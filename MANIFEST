@@ -11,3 +11,4 @@ lib/Thread/Tie/Hash.pm
 lib/Thread/Tie/Scalar.pm
 lib/Thread/Tie/Thread.pm
 t/Tie01.t
+t/Tie02.t

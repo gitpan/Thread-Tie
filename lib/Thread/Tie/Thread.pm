@@ -3,12 +3,12 @@ package Thread::Tie::Thread;
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION = '0.07';
+$VERSION = '0.08';
 use strict;
 
 # Make sure we only load stuff when we actually need it
 
-use AutoLoader 'AUTOLOAD';
+use load;
 
 # Make sure we can do threads
 # Make sure we can do shared threads
@@ -18,11 +18,11 @@ use threads ();
 use threads::shared ();
 use Thread::Serialize;
 
-# Thread local list of tied objects
 # Clone detection logic
+# Thread local list of tied objects
 
-our @OBJECT;
 our $CLONE = 0;
+our @OBJECT;
 
 # Satisfy -require-
 
@@ -54,7 +54,7 @@ sub new {
     my $server : shared = '';
     my $client : shared;
     @$self{qw(server client)} = (\$server,\$client);
-    $self->{'tid'} = threads->new( \&_handler,$self )->tid;
+    $self->{'tid'} = threads->new( \&OBJECT,$self )->tid;
 
 # Create the ordinal number channel (reserve 0 for special purposes)
 # Save reference to it inside the object
@@ -78,6 +78,12 @@ sub new {
 sub CLONE { $CLONE++ } #CLONE
 
 #---------------------------------------------------------------------------
+
+# Following subroutines are loaded on demand only
+
+__END__
+
+#---------------------------------------------------------------------------
 #  IN: 1 instantiated object
 
 sub DESTROY {
@@ -90,12 +96,6 @@ sub DESTROY {
     return if $self->{'CLONE'} != $CLONE;
     $self->shutdown;
 } #DESTROY
-
-#---------------------------------------------------------------------------
-
-# AutoLoader takes over from here
-
-__END__
 
 #---------------------------------------------------------------------------
 
@@ -184,7 +184,7 @@ sub _handle {
 #---------------------------------------------------------------------------
 #  IN: 1 instantiated object
 
-sub _handler {
+sub OBJECT {
 
 # Obtain the object
 # Obtain the references to the fields that we need
@@ -286,7 +286,7 @@ sub _handler {
         threads::shared::cond_signal( $server );
     }
     threads::shared::cond_signal( $server );
-} #_handler
+} #OBJECT
 
 #---------------------------------------------------------------------------
 #  IN: 1 object (ignored)
@@ -335,6 +335,8 @@ sub doUSE {
 } #doUSE
 
 #---------------------------------------------------------------------------
+
+__END__
 
 =head1 NAME
 
