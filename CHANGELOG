@@ -1,3 +1,10 @@
+0.05	20 August 2002
+	Dave Mitchell showed me the error of my ways with regards to client
+	server thread programming.  Fixed the main handler so that no yield()s
+	are necessary anymore.  The whole thing now gets through the test
+	suite more than 10% faster.  Scalability to many more threads should
+	now be a lot better too.
+
 0.04	15 August 2002
 	Added CAVEATS section about limitations of what can be transported
 	between threads.

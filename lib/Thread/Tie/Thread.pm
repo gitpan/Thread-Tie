@@ -3,7 +3,7 @@ package Thread::Tie::Thread;
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.04';
+our $VERSION : unique = '0.05';
 use strict;
 
 # Make sure we can do threads
@@ -11,7 +11,7 @@ use strict;
 # Make sure we can serialize with freeze() and thaw()
 
 use threads ();
-use threads::shared ();
+use threads::shared qw(cond_signal cond_wait);
 use Thread::Serialize;
 
 # Thread local list of tied objects
@@ -42,14 +42,14 @@ sub new {
     my $self = bless {},$class;
     $self->{'CLONE'} = $CLONE;
 
-# Create the control channel
-# Create the data channel
+# Create the server semaphore
+# Create the client semaphore
 # Store references to these inside the object
 # Start the thread, save the thread id on the fly
 
-    my $control : shared = '';
-    my $data : shared;
-    @$self{qw(control data)} = (\$control,\$data);
+    my $server : shared = '';
+    my $client : shared;
+    @$self{qw(server client)} = (\$server,\$client);
     $self->{'tid'} = threads->new( \&_handler,$self )->tid;
 
 # Create the ordinal number channel (reserve 0 for special purposes)
@@ -59,7 +59,7 @@ sub new {
 
     my $ordinal : shared = 1;
     $self->{'ordinal'} = \$ordinal;
-    threads->yield while defined($control);
+    threads->yield while defined($server);
     $self;
 } #new
 
@@ -115,45 +115,36 @@ sub _handle {
 
 # Obtain the object
 # Obtain the subroutine
-# Obtain the references to the control and data fields
+# Obtain the references to the shared server and client fields
 # Create frozen version of the data
 
     my $self = shift;
     my $sub = shift;
-    my ($control,$data) = @$self{qw(control data)};
+    my ($server,$client) = @$self{qw(server client)};
     my $frozen = freeze( @_ );
 
-# Initialize the tries counter
-# While we haven't got access to the handler
-#  Give up this timeslice if we tried this before
-#  Wait for access to the belt
-#  Reloop if we got access here before the handler was waiting again
+# Wait until we're allowed as client
+# Wait for access to the server
 
-    my $tries;
-    AGAIN: while (1) {
-        threads->yield if $tries++;
-        {lock( $control );
-         next AGAIN if defined( $$control );
+    {lock( $client );
+     lock( $server );
 
 # Set the data to be passed
 # Mark there is something being done now
-# Signal the handler to do its thing
+# Signal the server to do its thing
 
-         $$data = $frozen;
-         $$control = $sub;
-         threads::shared::cond_signal( $control );
-        } #$control
+     $$client = $frozen;
+     $$server = $sub;
+     cond_signal( $server );
 
-#  Wait for the handler to be done with this request
-#  Obtain local copy of result
-#  Indicate that the caller is ready with the request
-#  Return result of the action
+# Wait for the server to finish
+# Obtain local copy of result
+# Return result of the action
 
-        threads->yield while defined( $$control );
-        $frozen = $$data;
-        undef( $$data );
-        return thaw( $frozen );
-    }
+     cond_wait( $server );
+     $frozen = $$client;
+    } #$client,$server
+    thaw( $frozen );
 } #_handle
 
 #---------------------------------------------------------------------------
@@ -167,7 +158,7 @@ sub _handler {
 # Ordinal number of object to which it is tied
 
     my $self = shift;
-    my ($control,$data) = @$self{qw(control data)};
+    my ($server,$client) = @$self{qw(server client)};
     my $sub;
     my $ordinal;
 
@@ -199,28 +190,24 @@ sub _handler {
 # Take control of the belt
 # Indicate to the world we've taken control
 
-    lock( $control );
-    undef( $$control );
+    lock( $server );
+    undef( $$server );
 
 # While we're accepting things to do
 #  Wait for something to do
-#  Outloop when we're done
-
-    while (1) {
-        threads::shared::cond_wait( $control );
-        last unless $$control;
-
-#  Obtain the name of the subroutine to execute
+#  Outloop when we're done, obtaining name of sub on the fly
 #  Obtain the ordinal number of the object to execute + data to be sent
 
-        $sub = $$control;
-        ($ordinal,@_) = thaw( $$data );
+    while (1) {
+        cond_wait( $server );
+        last unless $sub = $$server;
+        ($ordinal,@_) = thaw( $$client );
 
 #  If we have an object, obtaining local copy of object on the fly
 #   If we have a code reference for this method, saving it on the fly
 #   Elseif we haven't checked before
 #    Normalize the subroutine name
-#    Obtain a code reference for this method on this object if here is one
+#    Obtain a code reference for this method on this object if there is one
 #   Call the method with the right object and save result
 
         if ($object = $OBJECT[$ordinal]) {
@@ -229,7 +216,7 @@ sub _handler {
                 (my $localsub = $sub) =~ s#^.*::##;
                 $code = $dispatch{$sub} = $object->can( $localsub );
             }
-            $$data = $code ? freeze( $code->( $object,@_ ) ) : $undef;
+            $$client = $code ? freeze( $code->( $object,@_ ) ) : $undef;
 
 #  Elseif we have a tie action
 #   If it is a known tie method
@@ -252,19 +239,19 @@ sub _handler {
 #   Die now, this is strange!
 
         } elsif ($sub =~ m#DESTROY$#) {
-            $$data = $undef;
+            $$client = $undef;
         } elsif ($code = $dispatch{$sub}) {
-            $$data = $code->( undef,@_ );
+            $$client = $code->( undef,@_ );
         } else {
             die "Attempting to $sub without an object at $ordinal\n";
         }
 
 #  Mark the data to be ready for usage
-#  Wait until the caller has taken it
+# Signal the one doing the shutdown that we're done
 
-	undef( $$control );
-        threads->yield while defined( $$data );
+        cond_signal( $server );
     }
+    cond_signal( $server );
 } #_handler
 
 #---------------------------------------------------------------------------

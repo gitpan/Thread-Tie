@@ -14,7 +14,7 @@ BEGIN {
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.04';
+our $VERSION : unique = '0.05';
 use strict;
 
 # Clone detection logic
