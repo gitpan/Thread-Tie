@@ -9,6 +9,6 @@ WriteMakefile (
   ABSTRACT	=> 'tie variables into a thread of their own') : (),
  VERSION_FROM	=> 'lib/Thread/Tie.pm',
  PREREQ_PM	=> {
-		   Thread::Serialize => 0,
+		   Thread::Serialize => '0.02',
                    },
 );

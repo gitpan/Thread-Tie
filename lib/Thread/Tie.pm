@@ -4,17 +4,19 @@ package Thread::Tie;
 # When we're compiling
 #  Make sure we can start the thread
 #  And start the default thread
+# Make sure the default thread is shut down when we're done
 
 my $THREAD;
 BEGIN {
     require Thread::Tie::Thread;
     $THREAD = Thread::Tie::Thread->new;
 }
+END { Thread::Tie->shutdown }
 
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.06';
+our $VERSION : unique = '0.07';
 use strict;
 
 # Clone detection logic

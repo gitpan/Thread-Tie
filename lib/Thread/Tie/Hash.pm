@@ -2,7 +2,7 @@ package Thread::Tie::Hash;
 
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.06';
+our $VERSION : unique = '0.07';
 use strict;
 
 # Satisfy -require-
