@@ -1,11 +1,3 @@
 Reading lines in list context only reads first line.  Need some way to
 correctly propegate the context to the actual read routine.  First attempt
 at this screwed up so many things I undid the changes.
-
-Add test-suite for lock()ing with stuff from the semaphore() method.
-
-Add test-suite for hammering from different threads.
-
-Add test-suite for lock()ing tests.
-
-Possibly add untie() functionality.

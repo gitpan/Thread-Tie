@@ -1,3 +1,37 @@
+0.03	13 August 2002
+	Fixed problem with DESTROYing of tied variables after the thread
+	was shut down.  Added error message when trying to do things other
+	than DESTROYing or UNTIEing after the thread was shut down.
+
+	Completed first version of documentation of Thread::Tie and
+	Thread::Tie::Thread.
+
+	Added "hammering" test-suite for tied file handles.
+
+	12 August 2002
+	Added "hammering" test-suite.  This now tests the array and hash
+	implementation as well as the capability to lock using a semaphore.
+
+	Streamlined the thread dispatcher further, succeeding in a 9%
+	gain in CPU usage.
+
+	Removed the DESTROY method from the default implementation of
+	tied variables in the thread (Thread::Tie::(Array|Hash|Scalar))
+	as they are not necessary anymore since we have untie() support
+	now.
+
+	Added support for untie().  Untieing a variable will cause the
+	DESTROY method to be called inside the thread before being untied
+	there as well.  Any subsequent DESTROY's (after the variable was
+	untied) will be ignored (thereby averting the untie GOTCHA).  This
+	can save significant amounts of memory.
+
+	Added method "shutdown" to Thread::Tie (as class method, to shut
+	down the default thread) and as object method to Thread::Tie::Thread.
+
+	Added support for "eval" field for evaluating arbitrary perl code
+	inside the thread when tie()ing the variable.
+
 0.02	10 August 2002
 	Added support for "use" field for using extra modules inside the
 	thread when tie()ing the variable.

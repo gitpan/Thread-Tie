@@ -7,7 +7,7 @@ BEGIN {				# Magic Perl CORE pragma
     }
 }
 
-use Test::More tests => 65;
+use Test::More tests => 71;
 
 use_ok( 'Thread::Tie::Thread' );
 can_ok( 'Thread::Tie::Thread',qw(
@@ -171,3 +171,25 @@ $read.= $_ while <$handle>;
 is( $read,$text.$text,			'check contents of file' );
 
 ok( unlink( $file ),			"unlink $file" );
+
+my @thread = threads->list;
+cmp_ok( scalar(@thread),'==',1,         'check number of threads' );
+Thread::Tie->shutdown;
+@thread = threads->list;
+cmp_ok( scalar(@thread),'==',0,         'check number of threads' );
+
+eval{ $scalar = 'a' };
+is( $@,"Cannot handle Thread::Tie::Scalar::STORE after shutdown\n",
+ 'check error message' );
+
+eval{ @array = ('a') };
+is( $@,"Cannot handle Thread::Tie::Array::CLEAR after shutdown\n",
+ 'check error message' );
+
+eval{ %hash = (a => 'A') };
+is( $@,"Cannot handle Thread::Tie::Hash::CLEAR after shutdown\n",
+ 'check error message' );
+
+eval{ readline( HANDLE ) };
+is( $@,"Cannot handle Thread::Tie::Handle::READLINE after shutdown\n",
+ 'check error message' );

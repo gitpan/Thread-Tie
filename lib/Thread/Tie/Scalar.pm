@@ -2,7 +2,7 @@ package Thread::Tie::Scalar;
 
 # Make sure we do everything by the book from now on
 
-our $VERSION : unique = '0.02';
+our $VERSION : unique = '0.03';
 use strict;
 
 # Satisfy -require-
@@ -40,11 +40,6 @@ sub FETCH { ${$_[0]} } #FETCH
 #      2 new value
 
 sub STORE { ${$_[0]} = $_[1] } #STORE
-
-#---------------------------------------------------------------------------
-#  IN: 1 instantiated object
-
-sub DESTROY { undef( ${$_[0]} )} #DESTROY
 
 #---------------------------------------------------------------------------
 
