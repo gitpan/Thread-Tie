@@ -177,6 +177,7 @@ $read.= $_ while <$handle>;
 is( $read,$text.$text,			'check contents of file' );
 
 ok( unlink( $file ),			"unlink $file" );
+1 while unlink $file; # multiversioned filesystems
 
 my @thread = threads->list;
 cmp_ok( scalar(@thread),'==',1,         'check number of threads' );

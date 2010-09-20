@@ -114,6 +114,7 @@ is( <$handle>,$check,			'check file contents' );
 ok( close( $handle ),			'check closing of handle' );
 
 ok( unlink( $testfile ),		'check removing of file' );
+1 while unlink $testfile; # multiversioned filesystems
 
 untie( *HANDLE );
 }
@@ -157,6 +158,7 @@ ok( close( HANDLE ),			'check closing of handle' );
 is( join('',@check),$check,		'check file contents' );
 
 ok( unlink( $testfile ),		'check removing of file' );
+1 while unlink $testfile; # multiversioned filesystems
 
 untie( *HANDLE );
 }
